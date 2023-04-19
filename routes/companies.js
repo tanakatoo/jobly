@@ -52,6 +52,28 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 
 router.get("/", async function (req, res, next) {
   try {
+
+    //validate query string
+
+    const allowedFilters = ["nameLike", "minEmployees", "maxEmployees"]
+    for (q in req.query) {
+      //make sure it is not an array
+      //make sure it is only one of the 3 filters
+      if (Array.isArray(req.query[q])) {
+        throw new BadRequestError("filter appears more than once")
+      }
+      if (!allowedFilters.includes(q)) {
+        throw new BadRequestError(`${q} is not a valid filter`)
+      }
+    }
+    if (minEmployees && maxEmployees) {
+      if (minEmployees > maxEmployees) {
+        throw new BadRequestError("Min employees is greater than max employees");
+      }
+    }
+
+    const { nameLike = '', minEmployees = null, maxEmployees = null } = req.query;
+
     const companies = await Company.findAll();
     return res.json({ companies });
   } catch (err) {
