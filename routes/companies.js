@@ -6,7 +6,7 @@ const jsonschema = require("jsonschema");
 const express = require("express");
 
 const { BadRequestError } = require("../expressError");
-const { ensureLoggedIn } = require("../middleware/auth");
+const { ensureLoggedIn, authenticateJWT, ensureAdmin } = require("../middleware/auth");
 const Company = require("../models/company");
 
 const companyNewSchema = require("../schemas/companyNew.json");
@@ -24,7 +24,7 @@ const router = new express.Router();
  * Authorization required: login
  */
 
-router.post("/", ensureLoggedIn, async function (req, res, next) {
+router.post("/", ensureLoggedIn, authenticateJWT, ensureAdmin, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, companyNewSchema);
     if (!validator.valid) {
@@ -54,11 +54,10 @@ router.get("/", async function (req, res, next) {
   try {
 
     //validate query string
-
-    const allowedFilters = ["nameLike", "minEmployees", "maxEmployees"]
-    for (q in req.query) {
-      //make sure it is not an array
-      //make sure it is only one of the 3 filters
+    const allowedFilters = ["name", "minEmployees", "maxEmployees"]
+    for (let q in req.query) {
+      //make sure it is not an array (no duplicate query strings)
+      //make sure it is only one of the 3 filters defined in allwedFilters
       if (Array.isArray(req.query[q])) {
         throw new BadRequestError("filter appears more than once")
       }
@@ -66,15 +65,24 @@ router.get("/", async function (req, res, next) {
         throw new BadRequestError(`${q} is not a valid filter`)
       }
     }
+
+    const { name = '', minEmployees = null, maxEmployees = null } = req.query;
+
     if (minEmployees && maxEmployees) {
-      if (minEmployees > maxEmployees) {
+      //check if minEmployees is an integer
+      if (!parseInt(minEmployees)) {
+        throw new BadRequestError("Min employees must be an integer")
+      }
+      if (!parseInt(maxEmployees)) {
+        throw new BadRequestError("Max employees must be an integer")
+      }
+      if (parseInt(minEmployees) > parseInt(maxEmployees)) {
         throw new BadRequestError("Min employees is greater than max employees");
       }
     }
 
-    const { nameLike = '', minEmployees = null, maxEmployees = null } = req.query;
 
-    const companies = await Company.findAll();
+    const companies = await Company.findAll(name, minEmployees, maxEmployees);
     return res.json({ companies });
   } catch (err) {
     return next(err);
@@ -109,8 +117,9 @@ router.get("/:handle", async function (req, res, next) {
  * Authorization required: login
  */
 
-router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
+router.patch("/:handle", ensureLoggedIn, authenticateJWT, ensureAdmin, async function (req, res, next) {
   try {
+
     const validator = jsonschema.validate(req.body, companyUpdateSchema);
     if (!validator.valid) {
       const errs = validator.errors.map(e => e.stack);
@@ -129,7 +138,7 @@ router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
  * Authorization: login
  */
 
-router.delete("/:handle", ensureLoggedIn, async function (req, res, next) {
+router.delete("/:handle", ensureLoggedIn, authenticateJWT, ensureAdmin, async function (req, res, next) {
   try {
     await Company.remove(req.params.handle);
     return res.json({ deleted: req.params.handle });
