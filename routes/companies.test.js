@@ -159,7 +159,7 @@ describe("GET /companies", function () {
     console.log('response is')
     console.log(resp.body.error.message)
     expect(resp.statusCode).toBe(400)
-    expect(resp.body.error.message).toEqual("filter appears more than once");
+    expect(resp.body.error.message).toEqual("name appears more than once");
   });
 
   test("fails: test next() handler", async function () {

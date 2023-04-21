@@ -52,11 +52,14 @@ class Company {
 
   static async findAll(name, minEmployees, maxEmployees) {
     let where = ""
+    let parameters = []
     let added = false
-
+    let n = 1;
     if (name != '' && name != null) {
-      where = `WHERE name ILIKE '%${name}%'`
+      where = `WHERE name ILIKE $${n}`
+      parameters.push(`%${name}%`)
       added = true
+      n++;
     }
     if (minEmployees) {
       if (added) {
@@ -64,7 +67,9 @@ class Company {
       } else {
         where = "WHERE "
       }
-      where += `num_employees >= ${minEmployees}`
+      where += `num_employees >= $${n}`
+      parameters.push(minEmployees)
+      n++
       added = true
     }
     if (maxEmployees) {
@@ -73,9 +78,11 @@ class Company {
       } else {
         where = "WHERE "
       }
-      where += `num_employees <= ${maxEmployees}`
+      where += `num_employees <= $${n}`
+      parameters.push(maxEmployees)
     }
-
+    console.log('where statement', where)
+    console.log('parameters', parameters)
     const companiesRes = await db.query(
       `SELECT handle,
                   name,
@@ -84,7 +91,7 @@ class Company {
                   logo_url AS "logoUrl"
            FROM companies
            ${where}
-           ORDER BY name `);
+           ORDER BY name `, parameters);
     return companiesRes.rows;
   }
 

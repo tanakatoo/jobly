@@ -59,7 +59,7 @@ router.get("/", async function (req, res, next) {
       //make sure it is not an array (no duplicate query strings)
       //make sure it is only one of the 3 filters defined in allwedFilters
       if (Array.isArray(req.query[q])) {
-        throw new BadRequestError("filter appears more than once")
+        throw new BadRequestError(`${q} appears more than once`)
       }
       if (!allowedFilters.includes(q)) {
         throw new BadRequestError(`${q} is not a valid filter`)

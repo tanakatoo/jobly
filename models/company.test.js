@@ -137,6 +137,7 @@ describe("findAll", function () {
 
   test("none returned: maxEmployee < minEmployee only filter", async function () {
     let companies = await Company.findAll('', 3, 2);
+    console.log('max smaller than min greturns', companies)
     expect(companies).toEqual([])
   });
 
