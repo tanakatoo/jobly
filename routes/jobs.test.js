@@ -213,7 +213,7 @@ describe("PATCH /companies/:handle", function () {
       })
       .set("authorization", `Bearer ${u4Token}`);
 
-    console.log('jobs from back from get one company', resp.body)
+    console.log('test: jobs in test', resp.body)
 
     expect(resp.body).toEqual({
       job: {
@@ -240,73 +240,86 @@ describe("PATCH /companies/:handle", function () {
   });
 
 
-  // test("unauth for anon", async function () {
-  //   const resp = await request(app)
-  //     .patch(`/companies/c1`)
-  //     .send({
-  //       name: "C1-new",
-  //     });
-  //   expect(resp.statusCode).toEqual(401);
-  // });
+  test("unauth for anon", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+    const resp = await request(app)
+      .patch(`/jobs/${theId}`)
+      .send({
+        title: "C1-new",
+      });
+    expect(resp.statusCode).toEqual(401);
+  });
 
-  // test("not found on no such company", async function () {
-  //   const resp = await request(app)
-  //     .patch(`/companies/nope`)
-  //     .send({
-  //       name: "new nope",
-  //     })
-  //     .set("authorization", `Bearer ${u4Token}`);
-  //   expect(resp.statusCode).toEqual(404);
-  // });
+  test("return none on no such jobID", async function () {
+    const resp = await request(app)
+      .patch(`/jobs/0`)
+      .send({
+        title: "new nope",
+      })
+      .set("authorization", `Bearer ${u4Token}`);
+    expect(resp.statusCode).toEqual(404);
+  });
 
-  // test("bad request on handle change attempt", async function () {
-  //   const resp = await request(app)
-  //     .patch(`/companies/c1`)
-  //     .send({
-  //       handle: "c1-new",
-  //     })
-  //     .set("authorization", `Bearer ${u4Token}`);
-  //   expect(resp.statusCode).toEqual(400);
-  // });
+  test("bad request on handle change attempt", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+    const resp = await request(app)
+      .patch(`/jobs/${theId}`)
+      .send({
+        handle: "c1-new",
+      })
+      .set("authorization", `Bearer ${u4Token}`);
+    expect(resp.statusCode).toEqual(400);
+  });
 
-  // test("bad request on invalid data", async function () {
-  //   const resp = await request(app)
-  //     .patch(`/companies/c1`)
-  //     .send({
-  //       logoUrl: "not-a-url",
-  //     })
-  //     .set("authorization", `Bearer ${u4Token}`);
-  //   expect(resp.statusCode).toEqual(400);
-  // });
+  test("bad request on invalid data", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+    const resp = await request(app)
+      .patch(`/jobs/${theId}`)
+      .send({
+        equity: 1.9,
+      })
+      .set("authorization", `Bearer ${u4Token}`);
+    expect(resp.statusCode).toEqual(400);
+  });
 });
 
-  // /************************************** DELETE /companies/:handle */
+/************************************** DELETE /companies/:handle */
 
-  // describe("DELETE /companies/:handle", function () {
-  //   test("works for users", async function () {
-  //     const resp = await request(app)
-  //       .delete(`/companies/c1`)
-  //       .set("authorization", `Bearer ${u4Token}`);
-  //     expect(resp.body).toEqual({ deleted: "c1" });
-  //   });
+describe("DELETE /jobs/:id", function () {
 
-  //   test("fails for users without admin account", async function () {
-  //     const resp = await request(app)
-  //       .delete(`/companies/c1`)
-  //       .set("authorization", `Bearer ${u1Token}`);
-  //     expect(resp.statusCode).toEqual(401);
-  //   });
+  test("works for admin users", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+    const resp = await request(app)
+      .delete(`/jobs/${theId}`)
+      .set("authorization", `Bearer ${u4Token}`);
+    expect(resp.body).toEqual({ deleted: `${theId}` });
+  });
 
-  //   test("unauth for anon", async function () {
-  //     const resp = await request(app)
-  //       .delete(`/companies/c1`);
-  //     expect(resp.statusCode).toEqual(401);
-  //   });
+  test("fails for users without admin account", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+    const resp = await request(app)
+      .delete(`/jobs/${theId}`)
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(401);
+  });
 
-  //   test("not found for no such company", async function () {
-  //     const resp = await request(app)
-  //       .delete(`/companies/nope`)
-  //       .set("authorization", `Bearer ${u4Token}`);
-  //     expect(resp.statusCode).toEqual(404);
-  //   });
-// });
+  test("unauth for anon", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+    const resp = await request(app)
+      .delete(`/jobs/${theId}`);
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("not found for no such id", async function () {
+    const resp = await request(app)
+      .delete(`/jobs/0`)
+      .set("authorization", `Bearer ${u4Token}`);
+    expect(resp.statusCode).toEqual(404);
+  });
+});

@@ -132,6 +132,7 @@ router.patch("/:id", ensureLoggedIn, authenticateJWT, ensureAdmin, async functio
     }
 
     const job = await Job.update(req.params.id, req.body);
+    console.log('returned from update job route', job)
     return res.json({ job });
   } catch (err) {
     return next(err);

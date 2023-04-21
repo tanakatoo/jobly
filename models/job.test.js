@@ -166,6 +166,7 @@ describe("update", function () {
     const theId = id.rows[0].id
 
     let job = await Job.update(theId, updateData);
+    console.log('job in test is', job)
     expect(job).toEqual({
       handle: "c1",
       id: theId,
@@ -179,7 +180,7 @@ describe("update", function () {
              FROM jobs
              WHERE id = ${theId}`);
     expect(result.rows).toEqual([{
-      handle: "c1",
+      company_handle: "c1",
       title: "New",
       salary: 100,
       equity: "0.1",
@@ -211,7 +212,7 @@ describe("update", function () {
              FROM jobs
              WHERE id = ${theId}`);
     expect(result.rows).toEqual([{
-      handle: "c1",
+      company_handle: "c1",
       title: "New",
       salary: null,
       equity: null,

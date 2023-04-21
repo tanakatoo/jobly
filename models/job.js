@@ -133,7 +133,7 @@ class Job {
                                 id`;
     const result = await db.query(querySql, [...values, id]);
     const job = result.rows[0];
-    console.log('jobs from update is', job)
+    console.log('jobs from update model is', job)
     if (!job) throw new NotFoundError(`No job: ${id}`);
 
     return job;
