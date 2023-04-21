@@ -12,6 +12,8 @@ const { ensureLoggedIn,
 } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
 const User = require("../models/user");
+const Application = require("../models/application")
+
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
@@ -58,8 +60,45 @@ router.post("/", ensureLoggedIn, authenticateJWT, ensureAdmin, async function (r
 
 router.get("/", ensureLoggedIn, authenticateJWT, ensureAdmin, async function (req, res, next) {
   try {
-    const users = await User.findAll();
+    const usersOnly = await User.findAll();
+
+    let users = []
+
+    // for (const u of usersOnly) {
+    //   let applications = await Application.getAll(u.username)
+    //   console.log('app for this user is', applications.map(a => a.job_id))
+    //   users.push({ user: u, jobs: applications.map(a => a.job_id) })
+    //   console.log('users with job is now', users)
+    // }
+
+
+    await Promise.all(usersOnly.map(async u => {
+      let applications = await Application.getAll(u.username)
+      users.push({ user: u, jobs: applications.map(a => a.job_id) })
+    }))
+
+
     return res.json({ users });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+
+/** GET /{jobID} => { applied: jobId }
+ *
+ * Returns { applied:jobId }
+ *
+ * Authorization required: login
+ **/
+
+router.post("/:username/jobs/:id", ensureLoggedIn, authenticateJWT, ensureAdminorOwn, async function (req, res, next) {
+  try {
+
+    const application = await Application.apply(req.params.username,
+      req.params.id);
+
+    return res.json({ applied: application.jobId });
   } catch (err) {
     return next(err);
   }
@@ -68,7 +107,7 @@ router.get("/", ensureLoggedIn, authenticateJWT, ensureAdmin, async function (re
 
 /** GET /[username] => { user }
  *
- * Returns { username, firstName, lastName, isAdmin }
+ * Returns { username, firstName, lastName, isAdmin, jobs:[jobId...] }
  *
  * Authorization required: login
  **/
@@ -77,7 +116,9 @@ router.get("/:username", ensureLoggedIn, authenticateJWT, ensureAdminorOwn, asyn
   try {
 
     const user = await User.get(req.params.username);
-    return res.json({ user });
+
+    const jobs = await Application.getAll(req.params.username);
+    return res.json({ user, jobs });
   } catch (err) {
     return next(err);
   }

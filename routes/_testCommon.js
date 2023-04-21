@@ -3,6 +3,7 @@
 const db = require("../db.js");
 const User = require("../models/user");
 const Company = require("../models/company");
+const Application = require("../models/application");
 const { createToken } = require("../helpers/tokens");
 const Job = require("../models/job.js");
 
@@ -84,6 +85,12 @@ async function commonBeforeAll() {
     salary: 234,
     equity: 0
   })
+
+  const id = await db.query(`select id from jobs where company_handle='c1'`)
+  const theId = id.rows[0].id
+
+  await Application.apply("u1", theId)
+
 }
 
 async function commonBeforeEach() {
@@ -100,6 +107,7 @@ async function commonAfterAll() {
 
 
 const u1Token = createToken({ username: "u1", isAdmin: false });
+const u2Token = createToken({ username: "u2", isAdmin: false });
 const u4Token = createToken({ username: "u4", isAdmin: true });
 
 module.exports = {
@@ -108,5 +116,6 @@ module.exports = {
   commonAfterEach,
   commonAfterAll,
   u1Token,
-  u4Token
+  u4Token,
+  u2Token
 };

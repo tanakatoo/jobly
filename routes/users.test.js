@@ -13,7 +13,8 @@ const {
   commonAfterEach,
   commonAfterAll,
   u1Token,
-  u4Token
+  u4Token,
+  u2Token
 } = require("./_testCommon");
 
 const { SECRET_KEY } = require("../config");
@@ -148,39 +149,53 @@ describe("POST /users", function () {
 
 describe("GET /users", function () {
   test("works for users", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+
     const resp = await request(app)
       .get("/users")
       .set("authorization", `Bearer ${u4Token}`);
+
+    console.log('now back to test, users is', resp.body)
+
     expect(resp.body).toEqual({
       users: [
         {
-          username: "u1",
-          firstName: "U1F",
-          lastName: "U1L",
-          email: "user1@user.com",
-          isAdmin: false,
+          user: {
+            username: "u1",
+            firstName: "U1F",
+            lastName: "U1L",
+            email: "user1@user.com",
+            isAdmin: false,
+          }, jobs: [theId]
         },
         {
-          username: "u2",
-          firstName: "U2F",
-          lastName: "U2L",
-          email: "user2@user.com",
-          isAdmin: false,
+          user: {
+            username: "u2",
+            firstName: "U2F",
+            lastName: "U2L",
+            email: "user2@user.com",
+            isAdmin: false,
+          }, jobs: []
         },
         {
-          username: "u3",
-          firstName: "U3F",
-          lastName: "U3L",
-          email: "user3@user.com",
-          isAdmin: false,
+          user: {
+            username: "u3",
+            firstName: "U3F",
+            lastName: "U3L",
+            email: "user3@user.com",
+            isAdmin: false,
+          }, jobs: []
         },
         {
-          username: "u4",
-          firstName: "U4F",
-          lastName: "U4L",
-          email: "user4@user.com",
-          isAdmin: true,
-        },
+          user: {
+            username: "u4",
+            firstName: "U4F",
+            lastName: "U4L",
+            email: "user4@user.com",
+            isAdmin: true,
+          }, jobs: []
+        }
       ],
     });
   });
@@ -215,6 +230,8 @@ describe("GET /users", function () {
 
 describe("GET /users/:username", function () {
   test("works for users who are admin", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
     const resp = await request(app)
       .get(`/users/u1`)
       .set("authorization", `Bearer ${u4Token}`);
@@ -226,10 +243,16 @@ describe("GET /users/:username", function () {
         email: "user1@user.com",
         isAdmin: false,
       },
+      jobs: [{
+        job_id: theId
+      }]
     });
   });
 
   test("works for users who are accessing their own data", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+
     const resp = await request(app)
       .get(`/users/u1`)
       .set("authorization", `Bearer ${u1Token}`);
@@ -241,6 +264,9 @@ describe("GET /users/:username", function () {
         email: "user1@user.com",
         isAdmin: false,
       },
+      jobs: [{
+        job_id: theId
+      }]
     });
   });
 
@@ -257,6 +283,71 @@ describe("GET /users/:username", function () {
     expect(resp.statusCode).toEqual(404);
   });
 });
+
+/************************************** POST /users/:username/jobs/:id */
+
+describe("POST /users/:username/jobs/:id", function () {
+  test("works for users who are admin", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+
+    const resp = await request(app)
+      .post(`/users/u2/jobs/${theId}`)
+      .set("authorization", `Bearer ${u4Token}`);
+    expect(resp.body).toEqual({
+      applied: theId
+    });
+
+    const respApp = await db.query("select * from applications where username='u2'")
+
+    expect(respApp.rows).toEqual(
+      [{
+        username: "u2",
+        job_id: theId
+      }]
+    )
+  });
+
+  test("works for the user themselves", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+
+    const resp = await request(app)
+      .post(`/users/u2/jobs/${theId}`)
+      .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.body).toEqual({
+      applied: theId
+    });
+
+    const respApp = await db.query("select * from applications where username='u2'")
+
+    expect(respApp.rows).toEqual(
+      [{
+        username: "u2",
+        job_id: theId
+      }]
+    )
+  });
+
+  test("do not work for anon", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+
+    const resp = await request(app)
+      .post(`/users/u2/jobs/${theId}`)
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("do not work for wrong user", async function () {
+    const id = await db.query(`select id from jobs where company_handle='c1'`)
+    const theId = id.rows[0].id
+
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${theId}`)
+      .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.statusCode).toEqual(401);
+  });
+})
 
 /************************************** PATCH /users/:username */
 
