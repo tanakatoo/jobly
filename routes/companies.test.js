@@ -154,7 +154,7 @@ describe("GET /companies", function () {
     expect(resp.body.error.message).toEqual("bug is not a valid filter");
   });
 
-  test("fail: filter appears more than once", async function () {
+  test.only("fail: filter appears more than once", async function () {
     const resp = await request(app).get("/companies?minEmployees=sdf&name=c1&maxEmployees=2&name=secondone");
     console.log('response is')
     console.log(resp.body.error.message)

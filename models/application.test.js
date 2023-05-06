@@ -16,7 +16,6 @@ beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
 
-/************************************** apply */
 
 describe("apply", function () {
   test("works", async function () {
@@ -59,7 +58,7 @@ describe("apply", function () {
 
       await Application.apply(newApplication);
       await Application.apply(newApplication);
-      //fail(); //************************************why do we want this to fail? why would it pass? */
+      //fail(); //(((((((((((((((((((((((((((((*why do we want this to fail? why would it pass? */
     } catch (err) {
       expect(err instanceof BadRequestError).toBeTruthy();
     }

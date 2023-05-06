@@ -56,6 +56,7 @@ router.get("/", async function (req, res, next) {
 
     //validate query string
     const allowedFilters = ["name", "minEmployees", "maxEmployees"]
+    console.log(req.query)
     for (let q in req.query) {
       //make sure it is not an array (no duplicate query strings)
       //make sure it is only one of the 3 filters defined in allwedFilters

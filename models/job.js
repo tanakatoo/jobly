@@ -28,7 +28,7 @@ class Job {
         title,
         salary,
         equity
-      ], //*************************why is there a comma here? */
+      ], //((((((((((((((((((((((((**why is there a comma here? */
     );
 
     const job = result.rows[0];

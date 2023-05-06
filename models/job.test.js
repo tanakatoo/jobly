@@ -53,7 +53,7 @@ describe("create", function () {
     try {
       await Job.create(newJob);
       await Job.create(newJob);
-      //fail(); //************************************why do we want this to fail? why would it pass? */
+      //fail(); //((((((((((((((((((((((((********why do we want this to fail? why would it pass? */
     } catch (err) {
       expect(err instanceof BadRequestError).toBeTruthy();
     }
